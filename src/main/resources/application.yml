@@ -1,0 +1,23 @@
+app:
+  name: twm-health-service
+  heroku: ${app.name}.herokuapp.com
+
+quarkus:
+  datasource:
+    db-kind: postgresql
+  http:
+    port: ${SERVER_PORT:25648}
+  security:
+    users:
+      embedded:
+        enabled: true
+        plain-text: true
+        roles:
+          itachi: user
+        users:
+          itachi: ${DBI_USER_CRED}
+  swagger-ui:
+    path: /swagger-ui
+    # always-include: true # disabled for prod
+  log:
+    level: ${LOGGING:INFO}
