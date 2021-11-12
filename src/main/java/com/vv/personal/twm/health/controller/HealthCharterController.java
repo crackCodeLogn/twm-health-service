@@ -1,22 +1,18 @@
 package com.vv.personal.twm.health.controller;
 
-import com.vv.personal.twm.health.interactor.twm.health.tables.HealthCharter;
-import com.vv.personal.twm.health.model.HealthCharterEntity;
+import com.vv.personal.twm.health.config.BeanStore;
+import com.vv.personal.twm.health.service.HealthCharterService;
+import com.vv.personal.twm.health.service.model.HealthCharter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
-
-import static com.vv.personal.twm.health.constants.Constants.DTF_ENTRY_DAY_DATE_PATTERN;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Vivek
@@ -27,11 +23,14 @@ import static com.vv.personal.twm.health.constants.Constants.DTF_ENTRY_DAY_DATE_
 @RequestMapping("health")
 @Secured("user")
 public class HealthCharterController {
+    //TODO - convert this controller to swagger impl
 
     @Inject
-    HealthCharter healthCharter;
+    BeanStore beanStore;
+    @Inject
+    HealthCharterService healthCharterService;
 
-    @GetMapping(value = "manual/create/entry")
+    @PutMapping(value = "manual/create/entry")
     public int createEntryManually(@RequestParam("person") String person,
                                    @RequestParam("weight") Double weight,
                                    @RequestParam("sugar-fasting") Integer fbs,
@@ -42,28 +41,50 @@ public class HealthCharterController {
                                    @RequestParam(value = "date_day", required = false) Integer day,
                                    @RequestParam(value = "date_month", required = false) Integer month,
                                    @RequestParam(value = "date_year", required = false) Integer year) {
+        StopWatch stopWatch = beanStore.procureStopWatch();
         Instant instant;
         if (day == null) instant = Instant.now();
         else instant = LocalDate.of(year, month, day).atTime(0, 0, 0).atZone(ZoneId.of("UTC")).toInstant();
 
-        HealthCharterEntity healthCharterEntity = new HealthCharterEntity()
-                .setPersonAndDate(generatePersonAndDate(person, instant))
-                .setPerson(person).setDate(instant)
-                .setWeight(weight)
-                .setFastingBloodSugar(getDefaultedInteger(fbs))
-                .setPostPrandialBloodSugar(getDefaultedInteger(pp2bs))
-                .setSystolicBP(getDefaultedInteger(bpHigh))
-                .setDiastolicBP(getDefaultedInteger(bpLow))
-                .setPulse(getDefaultedInteger(pulse));
+        HealthCharter healthCharter = HealthCharter.builder()
+                .person(person)
+                .date(instant)
+                .weight(weight)
+                .fastingBloodSugar(getDefaultedInteger(fbs))
+                .postPrandialBloodSugar(getDefaultedInteger(pp2bs))
+                .systolicBP(getDefaultedInteger(bpHigh))
+                .diastolicBP(getDefaultedInteger(bpLow))
+                .pulse(getDefaultedInteger(pulse))
+                .build();
 
-        log.info("Going to save => '{}'", healthCharterEntity);
-        int saveResult = healthCharter.pushNewEntity(healthCharterEntity);
-        log.info("Save result: {}", saveResult);
+        log.info("Going to save => '{}'", healthCharter);
+        int saveResult = healthCharterService.pushNewEntry(healthCharter);
+        stopWatch.stop();
+        log.info("Save result in {} ms: {}", stopWatch.getTime(TimeUnit.MILLISECONDS), saveResult);
         return saveResult;
     }
 
-    private String generatePersonAndDate(String person, Instant date) {
-        return person + "^" + date;
+    @GetMapping(value = "manual/backup", produces = "text/plain")
+    public String retrieveBackup(@RequestParam(name = "delimiter", defaultValue = ",") String delimiter) {
+        StopWatch stopWatch = beanStore.procureStopWatch();
+        try {
+            return healthCharterService.processDataToCsv(delimiter);
+        } finally {
+            stopWatch.stop();
+            log.info("Manual Backup csv operation done in {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @PutMapping(value = "manual/restore")
+    public int restoreFromBackup(@RequestParam(name = "srcFilePath") String srcFilePath,
+                                 @RequestParam(value = "delimiter", defaultValue = ",") String delimiter) {
+        StopWatch stopWatch = beanStore.procureStopWatch();
+        try {
+            return healthCharterService.restoreFromBackup(srcFilePath, delimiter);
+        } finally {
+            stopWatch.stop();
+            log.info("Restoration from Backup csv operation done in {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+        }
     }
 
     private Integer getDefaultedInteger(Integer val) {

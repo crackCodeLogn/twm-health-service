@@ -1,8 +1,6 @@
 package com.vv.personal.twm.health.config;
 
 import com.vv.personal.twm.health.auth.Authorizer;
-import com.vv.personal.twm.health.interactor.twm.health.tables.HealthCharter;
-import com.vv.personal.twm.health.repository.HealthCharterRepository;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,10 +25,5 @@ public class BeanStore {
     @Bean
     public Authorizer authorizer() {
         return new Authorizer(new Pbkdf2PasswordEncoder());
-    }
-
-    @Bean
-    public HealthCharter healthCharter(HealthCharterRepository healthCharterRepository) {
-        return new HealthCharter(healthCharterRepository);
     }
 }
