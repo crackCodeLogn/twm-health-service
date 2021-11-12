@@ -5,17 +5,20 @@
 <ol>
 <li>Java 11 - OpenJDK11</li>
 <li>Quarkus <a href="https://quarkus.io/">https://quarkus.io/</a></li>
-<li>Heroku <a href="https://dashboard.heroku.com/">https://dashboard.heroku.com/</a></li>
+
+[comment]: <> (<li>Heroku <a href="https://dashboard.heroku.com/">https://dashboard.heroku.com/</a></li>)
 <li>Postgres - for prod</li>
 <li>CockroachDB - for local dev. CRDB is built on postgres. <a href="https://www.cockroachlabs.com">https://www.cockroachlabs.com/</a></li>
 <li>Swagger - OpenAPI - non prod</li>
-<li>OpenFeign</li>
-<li>Gson</li>
 <li>Protobuf</li>
 <li>Lombok</li>
 <li>Apache Commons Lang3</li>
 <li>Assertj</li>
 </ol> 
+
+### Local Swagger snap:
+
+![alt text](pics/Screenshot%20from%202021-11-12%2017-05-57.png)
 
 ### Important notepoints:
 
@@ -27,7 +30,7 @@
 
 | Serial | Version | Time | Artifact | Significant changes | 
 | ------ | ------- | ---- | -------- | ------------------- |
-| 0      | 1.0     | 2021-11-08   | 0.0.1-SNAPSHOT | Base commit |
+| 0      | 1.0     | 2021-11-12   | 0.0.1-SNAPSHOT | Base commit |
 
 ## Backup option from postgres:-
 
